@@ -40,7 +40,7 @@ public class Game {
 	private static void initializePlayers() {
 
 		current_player = new Player(CheckerColor.WHITE, PlayerType.HUMAN);
-		second_player = new Player(CheckerColor.BLACK, PlayerType.HUMAN);
+		second_player = new Player(CheckerColor.BLACK, PlayerType.MIN_MAX);
 		
 	}
 	
@@ -51,10 +51,11 @@ public class Game {
 			@Override
 			public void makeMove(Move move) {
 				System.out.println("GOT HERE LOL");
-				/*gameLogic.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
+				gameLogic.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
+				boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
 				taken_move = move;
 				current_player.if_made_move = true;	
-				processMove();*/
+				processMove();
 			}
 		});
 		
@@ -63,10 +64,11 @@ public class Game {
 			@Override
 			public void makeMove(Move move) {
 				System.out.println("GOT HERE LOL");
-				/*gameLogic.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
+				gameLogic.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
+				boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
 				taken_move = move;
 				current_player.if_made_move = true;	
-				processMove();*/
+				processMove();
 			}
 		});
 		
@@ -138,12 +140,15 @@ public class Game {
 						players_swap = false;
 						System.out.println("CAN MAKE ANOTHER MOVE");
 						if(current_player.type == PlayerType.HUMAN) boardView.forceCheckerMove(taken_move.new_row+1, taken_move.new_col+1);
-						gameLogic.resetDoubleMove();
 					}
-					else boardView.resetForcedMove();
 				}
 				
 				current_player.if_made_move = false;
+				
+				System.out.println("AREA: " + gameLogic.getAreasScore(current_player.color));
+				System.out.println("BEAT: " + gameLogic.getCheckersBeatScore(current_player.color));
+				System.out.println("NUMBER: " + gameLogic.getCheckersNumberScore(current_player.color));
+				System.out.println("SECTOR: " + gameLogic.getSectorScore(current_player.color));
 				
 				if(players_swap){
 					System.out.println("CHANGE PLAYER");
@@ -158,9 +163,9 @@ public class Game {
 		}	
 		gameState = gameLogic.validateGameState();
 		if(gameState != GameState.IN_PLAY) System.out.println("KONIEC GRYYYYYYYYYY");
-		Board board = new Board(gameLogic);
 		players_swap = true;
-		current_player.yourTurn(board);
+		
+		current_player.yourTurn(new Board(gameLogic));
 	}
 	
 	private static void runGame() {

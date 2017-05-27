@@ -2,6 +2,17 @@ package Model;
 
 public class Board {
 	
+	static final int AREA_I = 1;
+	static final int AREA_II = 5;
+	static final int AREA_III = 10;
+	static final int SECTOR_I = 1;
+	static final int SECTOR_II = 10;
+	static final int SECTOR_III = 20;
+	static final int SECTOR_IV = 40;
+	static final int BEAT_POINTS = 30;
+	static final int BACKUP_POINTS = 10;
+	static final int COUNT_FACTOR = 5;
+	
 	// positions row/col from 0 to 7
 
 	private Checker [][] board;
@@ -52,6 +63,8 @@ public class Board {
 	}
 	
 	public void moveChecker(int old_row, int old_col, int new_row, int new_col){
+		resetBeatenChecker();
+		resetDoubleMove();
 		Checker c = board[old_row][old_col];
 		board[old_row][old_col] = null;
 		board[new_row][new_col] = c;
@@ -71,7 +84,10 @@ public class Board {
 	}
 	
 	public void removeChecker(int row, int col){
+		CheckerColor c = board[row][col].color;
 		board[row][col] = null;
+		if(c == CheckerColor.WHITE) white_number --;
+		else black_number --;
 	}
 	
 	public Checker getChecker(int row, int col){
@@ -211,12 +227,95 @@ public class Board {
 		}
 	}
 	
-	private boolean onePositionMoveAbility(int new_row, int new_col){
-		return new_col>=0 && new_col<=7 && !isOccupied(new_row, new_col);
+	public boolean onePositionMoveAbility(int new_row, int new_col){
+		return new_col>=0 && new_col<=7 && new_row>=0 && new_row<=7 && !isOccupied(new_row, new_col);
 	}
 	
-	private boolean twoPositionsMoveAbility(int new_row, int new_col, int mid_row, int mid_col, CheckerColor oponent_color){
-		return new_col>=0 && new_col<=7 && new_row>=0 && new_row<=7 &&isOccupied(mid_row, mid_col) && getChecker(mid_row, mid_col).color == oponent_color && !isOccupied(new_row, new_col);
+	public boolean twoPositionsMoveAbility(int new_row, int new_col, int mid_row, int mid_col, CheckerColor opponent_color){
+		return new_col>=0 && new_col<=7 && new_row>=0 && new_row<=7 && isOccupied(mid_row, mid_col) && getChecker(mid_row, mid_col).color == opponent_color && !isOccupied(new_row, new_col);
 		
+	}
+	
+	public int getCheckersNumberScore(CheckerColor color){
+		if(color == CheckerColor.WHITE) return isCheckerBeaten()? (100+white_number * COUNT_FACTOR) : white_number * COUNT_FACTOR; 
+		else return isCheckerBeaten()? (100+black_number * COUNT_FACTOR) : black_number * COUNT_FACTOR; 
+	}
+	
+	public int getCheckersBeatScore(CheckerColor color){
+		
+		int score = 0;
+		
+		for(int i = 0; i<8; i++){
+			for(int j = 0; j<8; j++){
+				if(isOccupied(i, j) && board[i][j].color == color){
+					if(color == CheckerColor.WHITE){
+						if(twoPositionsMoveAbility(i-2, j-2, i-1, j-1, CheckerColor.BLACK)) {
+							score += BEAT_POINTS;
+							if(i+1<7 && j+1<7 && isOccupied(i+1, j+1)) score += BACKUP_POINTS;								
+						}
+						if(twoPositionsMoveAbility(i-2, j+2, i-1, j+1, CheckerColor.BLACK)){
+							score += BEAT_POINTS;
+							if(i+1<7 && j-1>0 && isOccupied(i+1, j-1)) score += BACKUP_POINTS;
+						}		
+					}
+					else{
+						if(twoPositionsMoveAbility(i+2, j-2, i+1, j-1, CheckerColor.WHITE)) {
+							score += BEAT_POINTS;
+							if(i-1>0 && j+1<7 && isOccupied(i-1, j+1)) score += BACKUP_POINTS;
+						}
+						if(twoPositionsMoveAbility(i+2, j+2, i+1, j+1, CheckerColor.WHITE)) {
+							score += BEAT_POINTS;							
+							if(i-1>0 && j-1>0 &&isOccupied(i-1, j-1)) score += BACKUP_POINTS;
+						}					
+					}
+				}
+			}
+		}
+		return score;
+	}
+	
+	public int getAreasScore(CheckerColor color){
+		int score = 0;
+		
+		for(int i = 0; i<8; i++){
+			for(int j = 0; j<8; j++){
+				if(isOccupied(i, j) && board[i][j].color == color) score += countArea(i, j);
+			}
+		}
+		return score;
+	}
+	
+	private int countArea(int i, int j){
+		
+		int area = AREA_III;
+		if(i>0 && i<7 && j>0 && j<7){
+			area = AREA_II;
+			if(i>1 && i<6 && j>1 && j<6) area = AREA_I;
+		}
+		return area;
+	}
+	
+	public int getSectorScore(CheckerColor color){
+		int score = 0;
+		
+		for(int i = 0; i<8; i++){
+			for(int j = 0; j<8; j++){
+				if(isOccupied(i, j) && board[i][j].color == color) {
+					if(color == CheckerColor.WHITE){
+						if(i<2) score += SECTOR_IV;
+						else if(i<4) score += SECTOR_III;
+						else if(i<6) score += SECTOR_II;	
+						else score += SECTOR_I;
+					}
+					else{					
+						if(i>5) score += SECTOR_IV;
+						else if(i>3) score += SECTOR_III;
+						else if(i>1) score += SECTOR_II;	
+						else score += SECTOR_I;
+					}
+				}
+			}
+		}
+		return score;
 	}
 }
