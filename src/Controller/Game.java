@@ -1,10 +1,7 @@
 package Controller;
-
-import java.awt.EventQueue;
-
 import javax.swing.JFrame;
-
 import Model.Board;
+import Model.Board.FieldState;
 import Model.CheckerColor;
 import Model.GameState;
 import Model.Move;
@@ -21,8 +18,8 @@ public class Game {
 	static JFrame frame;
 	static GameState gameState;
 	static Board gameLogic;
-	static Player current_player;
-	static Player second_player;
+	private static Player current_player;
+	private static Player second_player;
 	static boolean players_swap = true;
 	static Move taken_move;
 	
@@ -39,8 +36,8 @@ public class Game {
 	
 	private static void initializePlayers() {
 
-		current_player = new Player(CheckerColor.WHITE, PlayerType.HUMAN);
-		second_player = new Player(CheckerColor.BLACK, PlayerType.MIN_MAX);
+		current_player = new Player(FieldState.WHITE, PlayerType.HUMAN);
+		second_player = new Player(FieldState.BLACK, PlayerType.HUMAN);
 		
 	}
 	
@@ -50,12 +47,7 @@ public class Game {
 			
 			@Override
 			public void makeMove(Move move) {
-				System.out.println("GOT HERE LOL");
-				gameLogic.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
-				boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
-				taken_move = move;
-				current_player.if_made_move = true;	
-				processMove();
+				makeTheMove(move);
 			}
 		});
 		
@@ -63,15 +55,19 @@ public class Game {
 			
 			@Override
 			public void makeMove(Move move) {
-				System.out.println("GOT HERE LOL");
-				gameLogic.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
-				boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
-				taken_move = move;
-				current_player.if_made_move = true;	
-				processMove();
+				makeTheMove(move);
 			}
 		});
 		
+	}
+	
+	private static void makeTheMove(Move move){
+		System.out.println("GOT HERE LOL");
+		gameLogic.moveChecker(move);
+		boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
+		taken_move = move;
+		current_player.if_made_move = true;	
+		processMove();
 	}
 	
 	private static void initializeBoard() {
@@ -92,7 +88,12 @@ public class Game {
 		 frame.setContentPane(boardView);
 		 frame.pack();
 		 frame.setResizable(false);
-	     boardView.changePlayer(current_player.color);
+	     changePlayerInView(current_player.getPlayerColor());
+	}
+	
+	private static void changePlayerInView(FieldState color){
+		if(color == FieldState.BLACK) boardView.changePlayer(CheckerColor.BLACK);
+		else boardView.changePlayer(CheckerColor.WHITE);
 	}
 	
 	private static void initializeViewListener(){
@@ -101,14 +102,10 @@ public class Game {
 			@Override
 			public boolean validateMove(int old_row, int old_col, int new_row, int new_col, CheckerColor color) {
 				System.out.println("VALIDATE MOVE CALLED");
-				old_row--;
-				old_col--;
-				new_row--;
-				new_col--;
-				
-				if(!gameLogic.validateMove(old_row, old_col, new_row, new_col)) return false;
-				gameLogic.moveChecker(old_row, old_col, new_row, new_col);
-				taken_move = new Move(old_row, old_col, new_row, new_col);
+				Move move = new Move(old_row-1, old_col-1, new_row-1, new_col-1);
+				if(!gameLogic.validateMove(move)) return false;
+				gameLogic.moveChecker(move);
+				taken_move = move;
 				current_player.if_made_move = true;				
 				return true;
 			}
@@ -126,8 +123,7 @@ public class Game {
 		gameLogic = new Board();
 	}
 	
-	
-	
+		
 	private static void processMove(){
 		
 		if(gameState == GameState.IN_PLAY){
@@ -136,26 +132,25 @@ public class Game {
 					System.out.println("CHECKER BEATEN");
 					boardView.removeChecker(gameLogic.beaten_checker_row+1, gameLogic.beaten_checker_col+1);
 					
-					if(gameLogic.canMakeAnotherMove(taken_move.new_row, taken_move.new_col, current_player.color)) {
+					if(gameLogic.isDoubleMove()) {
 						players_swap = false;
 						System.out.println("CAN MAKE ANOTHER MOVE");
 						if(current_player.type == PlayerType.HUMAN) boardView.forceCheckerMove(taken_move.new_row+1, taken_move.new_col+1);
 					}
-				}
-				
+				}				
 				current_player.if_made_move = false;
 				
-				System.out.println("AREA: " + gameLogic.getAreasScore(current_player.color));
-				System.out.println("BEAT: " + gameLogic.getCheckersBeatScore(current_player.color));
-				System.out.println("NUMBER: " + gameLogic.getCheckersNumberScore(current_player.color));
-				System.out.println("SECTOR: " + gameLogic.getSectorScore(current_player.color));
+				System.out.println("AREA: " + gameLogic.getAreasScore(current_player.getPlayerColor()));
+				System.out.println("BEAT: " + gameLogic.getCheckersBeatScore(current_player.getPlayerColor()));
+				System.out.println("NUMBER: " + gameLogic.getCheckersNumberScore(current_player.getPlayerColor()));
+				System.out.println("SECTOR: " + gameLogic.getSectorScore(current_player.getPlayerColor()));
 				
 				if(players_swap){
 					System.out.println("CHANGE PLAYER");
 					Player c_p = current_player;
 					current_player = second_player;
 					second_player = c_p;	
-					if(current_player.type == PlayerType.HUMAN) boardView.changePlayer(current_player.color);
+					if(current_player.type == PlayerType.HUMAN) changePlayerInView(current_player.getPlayerColor());
 					else boardView.changePlayer(null);
 					
 				}

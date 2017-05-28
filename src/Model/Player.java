@@ -2,10 +2,12 @@ package Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import Model.Board.FieldState;
+
 
 public class Player {
 
-	public static CheckerColor color;
+	private FieldState player_color;
 	public PlayerType type;
 	public boolean if_made_move = false;
 	private PlayerListener playerListener;
@@ -13,8 +15,8 @@ public class Player {
 	private final static int MAX_DEPTH = 4;
 	private static List<Node> leaves;
 	
-	public Player(CheckerColor color, PlayerType type){
-		Player.color = color;
+	public Player(FieldState color, PlayerType type){
+		player_color = color;
 		this.type = type;
 	}
 	
@@ -27,6 +29,10 @@ public class Player {
 		public void makeMove(Move move);
 	}
 	
+	public FieldState getPlayerColor(){
+		return player_color;
+	}
+	
 	public void yourTurn(Board board){
 		
 		System.out.println("ELO");
@@ -37,7 +43,7 @@ public class Player {
 			break;
 		}
 		case MIN_MAX :{
-			min_max(board,null,color,-1,null);
+			//min_max(board,null,player_color,-1,null);
 			int best_score = - 10000;
 			Node best_node = null;
 			for(int i = 0; i<leaves.size(); i++){
@@ -60,7 +66,7 @@ public class Player {
 		
 	}
 	
-	private static Node min_max(Board board, Move move, CheckerColor player_color, int depth, Node parent){
+	/* private static Node min_max(Board board, Move move, CheckerColor player_color, int depth, Node parent){
 		
 			depth += 1;
 			Node node = null;
@@ -72,7 +78,7 @@ public class Player {
 				board.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
 				int score = board.getAreasScore(player_color) + board.getCheckersBeatScore(player_color) 
 					+ board.getCheckersNumberScore(player_color) + board.getSectorScore(player_color) ;
-				score = color == player_color ? score+parent.getScore() : -score + parent.getScore();	
+				score = p_color == player_color ? score+parent.getScore() : -score + parent.getScore();	
 				state = board.validateGameState();
 				if(state != GameState.IN_PLAY){
 					switch (state) {
@@ -153,6 +159,6 @@ public class Player {
 			}
 		if(depth == MAX_DEPTH) leaves.add(node);
 		return node;			
-	}
+	} */
 	
 }
