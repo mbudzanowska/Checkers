@@ -8,15 +8,17 @@ import Model.Board.FieldState;
 public class Player {
 
 	private FieldState player_color;
+	private Heuristic heuristic;
 	public PlayerType type;
 	public boolean if_made_move = false;
 	private PlayerListener playerListener;
-	private final static int MAX_DEPTH = 6;
+	private final static int MAX_DEPTH = 5;
 	private static List<Node> leaves;
 	
-	public Player(FieldState player_color,FieldState opponent_color, PlayerType type){
+	public Player(FieldState player_color,FieldState opponent_color, PlayerType type, Heuristic heuristic){
 		this.player_color = player_color;
 		this.type = type;	
+		this.heuristic = heuristic;
 		leaves = new ArrayList<Node>();
 	}
 	
@@ -39,7 +41,7 @@ public class Player {
 		}
 		case MIN_MAX :{
 			System.out.println("MIN MAX PROCESSING");
-			move = useMinMax(copy, player_color);
+			move = useMinMax(copy, player_color, heuristic);
 			playerListener.makeMove(move);
 			break;
 			
@@ -51,13 +53,15 @@ public class Player {
 		
 	}
 	
-	private static Move useMinMax(Board  board, FieldState player_color){	
+	private static Move useMinMax(Board  board, FieldState player_color, Heuristic heuristic){	
 		leaves.clear();
-		min_max(board, null, player_color, player_color, 0, null);
-		int best_score = -10000;
+		min_max(board, null, player_color, player_color, 0, null, heuristic);
+		
+		if(leaves.isEmpty()) System.out.println("________________PUSTA LISTA");
+		
+		int best_score = -100000;
 		Node best_node = null;
 		
-		if(leaves.size() == 0) System.out.println("Krzycz trybson");
 		
 		for(int i = 0; i<leaves.size(); i++){
 			if(leaves.get(i).getScore()>best_score) {
@@ -65,6 +69,8 @@ public class Player {
 				best_node = leaves.get(i);
 			}
 		}
+		
+		
 		
 		System.out.println(best_score);
 		System.out.println(best_node.getMove());
@@ -74,15 +80,13 @@ public class Player {
 		
 	}
 	
-	 private static Node min_max(Board board, Move move, FieldState player_color, FieldState current_player_color, int depth, Node parent){
+	 private static Node min_max(Board board, Move move, FieldState player_color, FieldState current_player_color, int depth, Node parent, Heuristic heuristic){
 			 
 		 Node node;
 		 if(depth != 0){
 			 board.moveChecker(move);
 			 // tu ew dodaæ która heurystyka liczenia
-			 int score = board.getAreasScore(current_player_color) + board.getCheckersBeatScore(current_player_color) 
-				+ board.getCheckersNumberScore(current_player_color) + board.getSectorScore(current_player_color) 
-				+ board.getGameStateScore(current_player_color); 
+			 int score = getScore(board, current_player_color, heuristic);
 			 score = current_player_color == player_color? score + parent.getScore() : -score+parent.getScore();
 			 node = new Node(move, score, parent);
 		 }
@@ -106,7 +110,7 @@ public class Player {
 			 opponent = board.isDoubleMove() || depth == 0? current_player_color : opponent;
 			 
 			 for(int i = 0; i<possible_moves.size(); i++){
-				 node.addChild(min_max(new Board(board), possible_moves.get(i), player_color,  opponent, depth+1, node));
+				 node.addChild(min_max(new Board(board), possible_moves.get(i), player_color,  opponent, depth+1, node, heuristic));
 			 }			
 		 }		 
 		//depth nieparzyste ->ruch gracza, parzyste -> ruch przeciwnika(NIE BO PODWOJNY RUCH PATRZYMY NA KOLOR GRACZA)
@@ -116,5 +120,28 @@ public class Player {
 	public FieldState getPlayerColor() {
 		return player_color;
 	} 
+	
+	private static int getScore(Board board, FieldState color, Heuristic heuristic){		
+		int score = 0;	
+		switch(heuristic){
+		case AREA: {
+			score = board.getAreasScore(color);
+			break;
+		}
+		case SECTOR: {
+			score = board.getSectorScore(color);
+			break;
+		}
+		case BEAT_ABILITY: {
+			score = board.getCheckersBeatScore(color);
+			break;
+		}
+		case CHECKERS_NUMBER: {
+			score = board.getCheckersNumberScore(color) + board.getCheckersBeatScore(color) + board.getAreasScore(color) + board.getSectorScore(color);
+			break;
+		}	
+		}
+		return score + board.getGameStateScore(color); 		
+	}
 	
 }

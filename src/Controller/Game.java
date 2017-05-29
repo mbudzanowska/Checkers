@@ -4,6 +4,7 @@ import Model.Board;
 import Model.Board.FieldState;
 import Model.CheckerColor;
 import Model.GameState;
+import Model.Heuristic;
 import Model.Move;
 import Model.Player;
 import Model.Player.PlayerListener;
@@ -36,8 +37,8 @@ public class Game {
 	
 	private static void initializePlayers() {
 
-		current_player = new Player(FieldState.WHITE,FieldState.BLACK, PlayerType.HUMAN);
-		second_player = new Player(FieldState.BLACK,FieldState.WHITE, PlayerType.MIN_MAX);
+		current_player = new Player(FieldState.WHITE,FieldState.BLACK, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY);
+		second_player = new Player(FieldState.BLACK,FieldState.WHITE, PlayerType.MIN_MAX, Heuristic.CHECKERS_NUMBER);
 		
 	}
 	
@@ -64,6 +65,8 @@ public class Game {
 	private static void makeTheMove(Move move){
 		System.out.println("AI MADE MOVE");
 		gameLogic.moveChecker(move);
+		
+		
 		boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
 		synchronized(gameLogic){
 			try {
@@ -170,7 +173,7 @@ public class Game {
 					current_player = second_player;
 					second_player = c_p;	
 					if(current_player.type == PlayerType.HUMAN) changePlayerInView(current_player.getPlayerColor());
-					else boardView.changePlayer(null);
+					else changePlayerInView(null);
 					
 				}
 			}

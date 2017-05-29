@@ -19,7 +19,7 @@ public class Board {
 	static final int SECTOR_III = 10;
 	static final int SECTOR_IV = 20;
 	static final int BEAT_POINTS = 50;
-	static final int BACKUP_POINTS = 10;
+	static final int BACKUP_POINTS = 50;
 	static final int COUNT_FACTOR = 5;
 	
 	private FieldState [][] board;
@@ -203,12 +203,12 @@ public class Board {
 	}
 	
 	public List<Move> getAvailableWhiteMoves(){
-		if(availableWhiteMoves != null) return availableWhiteMoves;
+		if(availableWhiteMoves != null && availableWhiteMoves.size() > 0) return availableWhiteMoves;
 		else return getAllWhiteAvailableMoves();
 	}
 	
 	public List<Move> getAvailableBlackMoves(){
-		if(availableBlackMoves != null) return availableBlackMoves;
+		if(availableBlackMoves != null && availableBlackMoves.size() > 0) return availableBlackMoves;
 		else return getAllBlackAvailableMoves();
 	}
 	
@@ -268,8 +268,8 @@ public class Board {
 	
 	public List<Move> getAvailableMovesForWhiteOne(int row, int col){
 		List<Move> list = new ArrayList<Move>();
-		if(isFieldFree(row-1, col-1)) list.add(new Move(row, col, row-1, col-1));
-		if(isFieldFree(row-1, col+1)) list.add(new Move(row, col, row-1, col+1));
+		if((row-1 >= 0) && (col-1 >= 0) && isFieldFree(row-1, col-1)) list.add(new Move(row, col, row-1, col-1));
+		if((row-1 >= 0) && (col+1 <= 7) && isFieldFree(row-1, col+1)) list.add(new Move(row, col, row-1, col+1));
 		if(canCheckerBeat(row, col, row-2, col+2, FieldState.BLACK)) list.add(new Move(row, col, row-2, col+2));
 		if(canCheckerBeat(row, col, row-2, col-2, FieldState.BLACK)) list.add(new Move(row, col, row-2, col-2));
 		return list;
@@ -277,16 +277,16 @@ public class Board {
 	
 	public List<Move> getAvailableMovesForBlackOne(int row, int col){
 		List<Move> list = new ArrayList<Move>();
-		if(isFieldFree(row+1, col-1)) list.add(new Move(row, col, row+1, col-1));
-		if(isFieldFree(row+1, col+1)) list.add(new Move(row, col, row+1, col+1));
+		if((row+1 <= 7) && (col-1 >= 0) && isFieldFree(row+1, col-1)) list.add(new Move(row, col, row+1, col-1));
+		if((row+1 <= 7) && (col+1 <= 7) && isFieldFree(row+1, col+1)) list.add(new Move(row, col, row+1, col+1));
 		if(canCheckerBeat(row, col, row+2, col-2, FieldState.WHITE)) list.add(new Move(row, col, row+2, col-2));
 		if(canCheckerBeat(row, col, row+2, col+2, FieldState.WHITE)) list.add(new Move(row, col, row+2, col+2));
 		return list;
 	}
 	
 	public int getCheckersNumberScore(FieldState color){
-		if(color == FieldState.WHITE) return isCheckerBeaten()? (300+white_number * COUNT_FACTOR) : white_number * COUNT_FACTOR; 
-		else return isCheckerBeaten()? (100+black_number * COUNT_FACTOR) : black_number * COUNT_FACTOR; 
+		if(color == FieldState.WHITE) return white_number * COUNT_FACTOR; 
+		else return black_number * COUNT_FACTOR; 
 	}
 	
 	public int getGameStateScore(FieldState color){
@@ -300,27 +300,32 @@ public class Board {
 	public int getCheckersBeatScore(FieldState color){
 		
 		int score = 0;
+		if(if_checker_beaten) score += 300;
 		
 		for(int i = 0; i<8; i++){
 			for(int j = 0; j<8; j++){
 				if(color == FieldState.WHITE && getChecker(i, j) == color){
 					if(canCheckerBeat(i-2, j-2, i-1, j-1, FieldState.BLACK)){
 						score += BEAT_POINTS;
-						if((i+1 < 7) && (j+1 < 7) && !isFieldFree(i+1, j+1)) score += BACKUP_POINTS;	
+						if((i+1 < 7) && (j+1 < 7) && !isFieldFree(i+1, j+1)) score += BACKUP_POINTS;
+						else score -= BEAT_POINTS*1.5;
 					}
 					if(canCheckerBeat(i-2, j+2, i-1, j+1, FieldState.BLACK)){
 						score += BEAT_POINTS;
 						if((i+1 < 7) && (j-1 > 0) && !isFieldFree(i+1, j-1)) score += BACKUP_POINTS;
+						else score -= BEAT_POINTS*1.5;
 					}		
 					
 				else if(color == FieldState.BLACK && getChecker(i, j) == color)
 					if(canCheckerBeat(i+2, j-2, i+1, j-1, FieldState.WHITE)){
 						score += BEAT_POINTS;
 						if((i-1 > 0) && (j+1 < 7) && !isFieldFree(i-1, j+1)) score += BACKUP_POINTS;	
+						else score -= BEAT_POINTS*1.5;
 					}
 					if(canCheckerBeat(i+2, j+2, i+1, j+1, FieldState.WHITE)){
 						score += BEAT_POINTS;
 						if((i-1 > 0) && (j-1 > 0) && !isFieldFree(i-1, j-1)) score += BACKUP_POINTS;
+						else score -= BEAT_POINTS*1.5;
 					}		
 				}
 			}
