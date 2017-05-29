@@ -13,6 +13,8 @@ public class Player {
 	private final static int MAX_DEPTH = 6;
 	private Move chosen_move;
 	private int val;
+	static int min_max;
+	static int alpha_beta;
 	
 	public Player(FieldState player_color, PlayerType type, Heuristic heuristic){
 		this.player_color = player_color;
@@ -49,14 +51,23 @@ public class Player {
 			break;
 		}
 		case MIN_MAX :{
-			System.out.println("MIN MAX PROCESSING");
+			min_max = 0;
+			//System.out.println("MIN MAX PROCESSING");
 			min_max(copy, null, player_color, MAX_DEPTH, 0);
-			System.out.println(chosen_move +"       " + val + "    " + player_color);
+			//System.out.println(chosen_move +"       " + val + "    " + player_color);
+			System.out.println("MIN MAX NODE VISITED: "+min_max);
 			playerListener.makeMove(chosen_move);
+			
 			break;
 			
 		}
 		case ALFA_BETA :{
+			alpha_beta = 0;
+			//System.out.println("ALPHA BETA PROCESSING");
+			alpha_beta(copy, null, player_color, MAX_DEPTH, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+			//System.out.println(chosen_move +"       " + val + "    " + player_color);
+			System.out.println("ALPHA BETA NODE VISITED: "+alpha_beta);
+			playerListener.makeMove(chosen_move);
 			break;
 		}
 		}
@@ -64,6 +75,8 @@ public class Player {
 	}
 	
 	 private double min_max(Board board, Move move, FieldState current_player_color, int depth, int score_sum){
+		 
+		 min_max ++;
 		 
 		 int score = depth == MAX_DEPTH? score_sum : score_sum + getNodeScore(board, move, current_player_color); 
 		 if(board.getCurrentGameState() != GameState.IN_PLAY || depth == 0) {
@@ -84,7 +97,7 @@ public class Player {
 					 if(depth == MAX_DEPTH) {
 						 chosen_move = child;
 						 val = (int) bestValue;
-						 System.out.println("MAX  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
+						// System.out.println("MAX  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
 					 }
 				 }
 			 }	
@@ -95,12 +108,11 @@ public class Player {
 			 for(Move child: possible_moves){
 				 double value = min_max(new Board(board), child, opponent, depth-1, score);
 				 if(value < bestValue){
-					 bestValue = value;
-					 
+					 bestValue = value;				 
 					 if(depth == MAX_DEPTH) {
 						 chosen_move = child;
 						 val = (int) bestValue;		
-						 System.out.println("MIN  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
+						 //System.out.println("MIN  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
 					 }
 				 }
 			 }
@@ -108,11 +120,12 @@ public class Player {
 		 }
 	 }
 	 
- private double alpha_beta(Board board, Move move, FieldState current_player_color, int depth, int score_sum){
+ private double alpha_beta(Board board, Move move, FieldState current_player_color, int depth, int score_sum, double alpha, double beta){
+	 
+	 	alpha_beta ++;
 		 
 		 int score = depth == MAX_DEPTH? score_sum : score_sum + getNodeScore(board, move, current_player_color); 
 		 if(board.getCurrentGameState() != GameState.IN_PLAY || depth == 0) {
-			 System.out.println(score);
 			 return score;
 		 }
 		 
@@ -120,33 +133,38 @@ public class Player {
 		 List <Move> possible_moves = getMoves(current_player_color, board);
 		 FieldState opponent = board.isDoubleMove()? current_player_color : getOpponent(current_player_color);
 		 
-		 if(current_player_color != getPlayerColor()) { // MAX
+		 if(current_player_color == getPlayerColor()) { // MAX
 			 bestValue = Double.NEGATIVE_INFINITY;
 			 for(Move child: possible_moves){
-				 double value = min_max(new Board(board), child, opponent, depth-1, score);
+				 double value = alpha_beta(new Board(board), child, opponent, depth-1, score, alpha, beta);
 				 if(value > bestValue){
+					
 					 bestValue = value;
 					 if(depth == MAX_DEPTH) {
 						 chosen_move = child;
 						 val = (int) bestValue;
-						 System.out.println(current_player_color+ "   best: " + child);
+						// System.out.println("MAX  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
 					 }
 				 }
+				 alpha = Double.max(alpha, bestValue);
+				 if(beta <= alpha) break;
 			 }	
 			 return bestValue;
 		 }
 		 else{ //MIN
 			 bestValue = Double.POSITIVE_INFINITY;
 			 for(Move child: possible_moves){
-				 double value = min_max(new Board(board), child, opponent, depth-1, score);
+				 double value = alpha_beta(new Board(board), child, opponent, depth-1, score, alpha, beta);
 				 if(value < bestValue){
-					 bestValue = value;
+					 bestValue = value;				 
 					 if(depth == MAX_DEPTH) {
 						 chosen_move = child;
-						 val = (int) bestValue;
-						 System.out.println(current_player_color+ "   best: " + child);
+						 val = (int) bestValue;		
+						 //System.out.println("MIN  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
 					 }
-				 }
+				 }	 
+				 beta = Double.min(beta, bestValue);
+				 if(beta <= alpha) break;
 			 }
 			 return bestValue;
 		 }

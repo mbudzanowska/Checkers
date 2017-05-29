@@ -18,9 +18,8 @@ public class Board {
 	static final int SECTOR_II = 5;
 	static final int SECTOR_III = 10;
 	static final int SECTOR_IV = 20;
-	static final int BEAT_POINTS = 30;
-	static final int BACKUP_POINTS = 20;
-	static final int COUNT_FACTOR = 5;
+	static final int BEAT_POINTS = 150;
+	static final int COUNT_FACTOR = 3;
 	
 	private FieldState [][] board;
 	private boolean if_double_move = false; // if currently move checker has to beat another one

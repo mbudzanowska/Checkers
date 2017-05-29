@@ -37,7 +37,7 @@ public class Game {
 	
 	private static void initializePlayers() {
 
-		current_player = new Player(FieldState.WHITE, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY);
+		current_player = new Player(FieldState.WHITE, PlayerType.ALFA_BETA, Heuristic.BEAT_ABILITY);
 		second_player = new Player(FieldState.BLACK, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY);
 		
 	}
