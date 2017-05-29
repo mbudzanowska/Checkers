@@ -37,14 +37,14 @@ public class Game {
 	
 	private static void initializePlayers() {
 
-		current_player = new Player(FieldState.WHITE,FieldState.BLACK, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY);
-		second_player = new Player(FieldState.BLACK,FieldState.WHITE, PlayerType.MIN_MAX, Heuristic.CHECKERS_NUMBER);
+		current_player = new Player(FieldState.WHITE, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY);
+		second_player = new Player(FieldState.BLACK, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY);
 		
 	}
 	
 	private static void initializePlayersListeners(){
 		
-		if(current_player.type != PlayerType.HUMAN) current_player.setPlayerListener(new PlayerListener() {
+		if(current_player.getPlayerType() != PlayerType.HUMAN) current_player.setPlayerListener(new PlayerListener() {
 			
 			@Override
 			public void makeMove(Move move) {
@@ -52,7 +52,7 @@ public class Game {
 			}
 		});
 		
-		if(second_player.type != PlayerType.HUMAN) second_player.setPlayerListener(new PlayerListener() {
+		if(second_player.getPlayerType() != PlayerType.HUMAN) second_player.setPlayerListener(new PlayerListener() {
 			
 			@Override
 			public void makeMove(Move move) {
@@ -156,7 +156,7 @@ public class Game {
 					if(gameLogic.isDoubleMove()) {
 						players_swap = false;
 						System.out.println("CAN MAKE ANOTHER MOVE");
-						if(current_player.type == PlayerType.HUMAN) boardView.forceCheckerMove(taken_move.new_row+1, taken_move.new_col+1);
+						if(current_player.getPlayerType() == PlayerType.HUMAN) boardView.forceCheckerMove(taken_move.new_row+1, taken_move.new_col+1);
 					}
 					else boardView.resetForcedMove();
 				}				
@@ -172,7 +172,7 @@ public class Game {
 					Player c_p = current_player;
 					current_player = second_player;
 					second_player = c_p;	
-					if(current_player.type == PlayerType.HUMAN) changePlayerInView(current_player.getPlayerColor());
+					if(current_player.getPlayerType() == PlayerType.HUMAN) changePlayerInView(current_player.getPlayerColor());
 					else changePlayerInView(null);
 					
 				}
@@ -189,7 +189,7 @@ public class Game {
 	private static void runGame() {
 		gameState = GameState.IN_PLAY;
 		frame.setVisible(true);  
-		if(current_player.type != PlayerType.HUMAN) current_player.yourTurn(gameLogic);
+		if(current_player.getPlayerType() != PlayerType.HUMAN) current_player.yourTurn(gameLogic);
 	}
 
 }

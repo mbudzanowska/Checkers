@@ -18,8 +18,8 @@ public class Board {
 	static final int SECTOR_II = 5;
 	static final int SECTOR_III = 10;
 	static final int SECTOR_IV = 20;
-	static final int BEAT_POINTS = 50;
-	static final int BACKUP_POINTS = 50;
+	static final int BEAT_POINTS = 30;
+	static final int BACKUP_POINTS = 20;
 	static final int COUNT_FACTOR = 5;
 	
 	private FieldState [][] board;
@@ -249,14 +249,14 @@ public class Board {
 	public List<Move> getAllWhiteAvailableMoves(){
 		List<Move> list = new ArrayList<Move>();
 		if(isDoubleMove() && getChecker(double_checker_row, double_checker_col) == FieldState.WHITE){
-			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col+2, FieldState.BLACK))
-				list.add(new Move(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col+2));
 			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col-2, FieldState.BLACK))
 				list.add(new Move(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col-2));
+			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col+2, FieldState.BLACK))
+				list.add(new Move(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col+2));
 		}
 		else {
-			for(int i = 0; i<8; i++){
-				for(int j = 0; j<8; j++){
+			for(int i = 7; i>=0; i--){
+				for(int j = 7; j>=0; j--){
 					if(getChecker(i, j) == FieldState.WHITE) list.addAll(getAvailableMovesForWhiteOne(i, j));
 				}
 			}
@@ -276,9 +276,10 @@ public class Board {
 	}
 	
 	public List<Move> getAvailableMovesForBlackOne(int row, int col){
+		
 		List<Move> list = new ArrayList<Move>();
-		if((row+1 <= 7) && (col-1 >= 0) && isFieldFree(row+1, col-1)) list.add(new Move(row, col, row+1, col-1));
 		if((row+1 <= 7) && (col+1 <= 7) && isFieldFree(row+1, col+1)) list.add(new Move(row, col, row+1, col+1));
+		if((row+1 <= 7) && (col-1 >= 0) && isFieldFree(row+1, col-1)) list.add(new Move(row, col, row+1, col-1));	
 		if(canCheckerBeat(row, col, row+2, col-2, FieldState.WHITE)) list.add(new Move(row, col, row+2, col-2));
 		if(canCheckerBeat(row, col, row+2, col+2, FieldState.WHITE)) list.add(new Move(row, col, row+2, col+2));
 		return list;
@@ -299,38 +300,9 @@ public class Board {
 	
 	public int getCheckersBeatScore(FieldState color){
 		
-		int score = 0;
-		if(if_checker_beaten) score += 300;
-		
-		for(int i = 0; i<8; i++){
-			for(int j = 0; j<8; j++){
-				if(color == FieldState.WHITE && getChecker(i, j) == color){
-					if(canCheckerBeat(i-2, j-2, i-1, j-1, FieldState.BLACK)){
-						score += BEAT_POINTS;
-						if((i+1 < 7) && (j+1 < 7) && !isFieldFree(i+1, j+1)) score += BACKUP_POINTS;
-						else score -= BEAT_POINTS*1.5;
-					}
-					if(canCheckerBeat(i-2, j+2, i-1, j+1, FieldState.BLACK)){
-						score += BEAT_POINTS;
-						if((i+1 < 7) && (j-1 > 0) && !isFieldFree(i+1, j-1)) score += BACKUP_POINTS;
-						else score -= BEAT_POINTS*1.5;
-					}		
-					
-				else if(color == FieldState.BLACK && getChecker(i, j) == color)
-					if(canCheckerBeat(i+2, j-2, i+1, j-1, FieldState.WHITE)){
-						score += BEAT_POINTS;
-						if((i-1 > 0) && (j+1 < 7) && !isFieldFree(i-1, j+1)) score += BACKUP_POINTS;	
-						else score -= BEAT_POINTS*1.5;
-					}
-					if(canCheckerBeat(i+2, j+2, i+1, j+1, FieldState.WHITE)){
-						score += BEAT_POINTS;
-						if((i-1 > 0) && (j-1 > 0) && !isFieldFree(i-1, j-1)) score += BACKUP_POINTS;
-						else score -= BEAT_POINTS*1.5;
-					}		
-				}
-			}
-		}
-		return score;
+		if(if_checker_beaten) return BEAT_POINTS;
+		else return 0;
+
 	}
 	
 	public int getAreasScore(FieldState color){

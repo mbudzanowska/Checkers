@@ -16,7 +16,7 @@ import Model.CheckerColor;
 public class BoardView extends JComponent {
 	
 	// positions row/col from 1 to 8
-	
+
 	private final static int SQUARE_SIZE = (int) (CheckerView.getDimension() * 1.25);
 	private final int BOARD_SIZE =  8*SQUARE_SIZE;
 	private Dimension BOARD_DIMENSION;
