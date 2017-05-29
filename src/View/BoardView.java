@@ -11,8 +11,6 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComponent;
-
-import Controller.Game;
 import Model.CheckerColor;
 
 public class BoardView extends JComponent {
@@ -289,6 +287,14 @@ public class BoardView extends JComponent {
 	public void resetForcedMove() {
 		forced_checker = null;
 		forced_checker_move = false;		
+	}
+	
+	public void repaintManually(){
+		 if(checker_to_remove != null){
+        	 checkers.remove(checker_to_remove);
+        	 checker_to_remove = null;
+        	 repaint();
+         }
 	}
 	   
 }

@@ -11,13 +11,13 @@ public class Player {
 	public PlayerType type;
 	public boolean if_made_move = false;
 	private PlayerListener playerListener;
-	//private static Move move;
-	private final static int MAX_DEPTH = 4;
+	private final static int MAX_DEPTH = 6;
 	private static List<Node> leaves;
 	
-	public Player(FieldState color, PlayerType type){
-		player_color = color;
-		this.type = type;
+	public Player(FieldState player_color,FieldState opponent_color, PlayerType type){
+		this.player_color = player_color;
+		this.type = type;	
+		leaves = new ArrayList<Node>();
 	}
 	
 	public void setPlayerListener(PlayerListener playerListener){
@@ -29,136 +29,92 @@ public class Player {
 		public void makeMove(Move move);
 	}
 	
-	public FieldState getPlayerColor(){
-		return player_color;
-	}
-	
-	public void yourTurn(Board board){
+	public void yourTurn(Board board){ 
 		
-		System.out.println("ELO");
-		leaves = new ArrayList<Node>();
-		
+		Board copy = new Board(board);
+		Move move = null;
 		switch (type) {
 		case HUMAN:{
 			break;
 		}
 		case MIN_MAX :{
-			//min_max(board,null,player_color,-1,null);
-			int best_score = - 10000;
-			Node best_node = null;
-			for(int i = 0; i<leaves.size(); i++){
-				if(leaves.get(i).getScore()>best_score) {
-					best_score = leaves.get(i).getScore();
-					best_node = leaves.get(i);
-				}
-			}
-			playerListener.makeMove(best_node.getMove());
+			System.out.println("MIN MAX PROCESSING");
+			move = useMinMax(copy, player_color);
+			playerListener.makeMove(move);
 			break;
+			
 		}
 		case ALFA_BETA :{
 			break;
 		}
 		}
-		//playerListener.makeMove(null);
-		
-		// kejsy srejsy dla algorytmów
-		
 		
 	}
 	
-	/* private static Node min_max(Board board, Move move, CheckerColor player_color, int depth, Node parent){
+	private static Move useMinMax(Board  board, FieldState player_color){	
+		leaves.clear();
+		min_max(board, null, player_color, player_color, 0, null);
+		int best_score = -10000;
+		Node best_node = null;
 		
-			depth += 1;
-			Node node = null;
-			GameState state = null;
-			if(depth == 0){
-				node = new Node(null, 0, 0, null);
+		if(leaves.size() == 0) System.out.println("Krzycz trybson");
+		
+		for(int i = 0; i<leaves.size(); i++){
+			if(leaves.get(i).getScore()>best_score) {
+				best_score = leaves.get(i).getScore();
+				best_node = leaves.get(i);
 			}
-			else{
-				board.moveChecker(move.old_row, move.old_col, move.new_row, move.new_col);
-				int score = board.getAreasScore(player_color) + board.getCheckersBeatScore(player_color) 
-					+ board.getCheckersNumberScore(player_color) + board.getSectorScore(player_color) ;
-				score = p_color == player_color ? score+parent.getScore() : -score + parent.getScore();	
-				state = board.validateGameState();
-				if(state != GameState.IN_PLAY){
-					switch (state) {
-					case BLACK_PLAYER_WON:{
-						if(player_color == CheckerColor.BLACK) score += 1000;
-						else score -= 1000;
-						break;
-					}
-					case WHITE_PLAYER_WON:{
-						if(player_color == CheckerColor.WHITE) score += 1000;
-						else score -= 1000;
-						break;
-					}
-					case TIE:{
-						score += 500;
-						break;
-					}
-					case IN_PLAY:
-						break;
-					default:
-						break;
-					}
-				}
-				node = new Node(move, depth, score, parent);
-				if(state != GameState.IN_PLAY) leaves.add(node);
-			}
-			
-			if(depth <= MAX_DEPTH && state != GameState.IN_PLAY){
-				System.out.println(depth);
-				if(player_color == CheckerColor.WHITE){ 
-					if(board.isDoubleMove()){ // jeszcze raz ruch tego samego gracza
-						if(board.twoPositionsMoveAbility(move.new_row-2, move.new_col+2, move.new_row-1, move.new_col+1, CheckerColor.BLACK))
-							node.addChild(min_max(new Board(board), new Move(move.new_row, move.new_col, move.new_row-2, move.new_col+2),CheckerColor.WHITE, depth ++, node));
-						if(board.twoPositionsMoveAbility(move.new_row-2, move.new_col-2, move.new_row-1, move.new_col-1, CheckerColor.BLACK))
-							node.addChild(min_max(new Board(board), new Move(move.new_row, move.new_col, move.new_row-2, move.new_col-2),CheckerColor.WHITE, depth ++, node));
-					}
-					else{ // ruch przeciwnika
-						for(int i = 0; i<7; i++){
-							for(int j = 0; j<7; j++){
-								if(board.isOccupied(i, j) && board.getChecker(i, j).color == CheckerColor.BLACK){
-									if(board.onePositionMoveAbility(i+1, j+1)) 
-										node.addChild(min_max(new Board(board), new Move(i,j,i+1,j+1), CheckerColor.BLACK, depth, node));
-									if(board.onePositionMoveAbility(i+1, j-1))
-										node.addChild(min_max(new Board(board), new Move(i,j,i+1,j-1), CheckerColor.BLACK, depth, node));
-									if(board.twoPositionsMoveAbility(i+2, j+2, i+1, j+1, CheckerColor.WHITE))
-										node.addChild(min_max(new Board(board), new Move(i, j, i+2, j+2),CheckerColor.BLACK, depth, node));
-									if(board.twoPositionsMoveAbility(i+2, j-2, i+1, j-1, CheckerColor.WHITE))
-										node.addChild(min_max(new Board(board), new Move(i, j, i+2, j-2),CheckerColor.BLACK, depth, node));
-								}
-							}
-						}
-					}
-				}
-				else{
-					if(board.isDoubleMove()){
-						if(board.twoPositionsMoveAbility(move.new_row+2, move.new_col+2, move.new_row+1, move.new_col+1, CheckerColor.WHITE))
-							node.addChild(min_max(new Board(board), new Move(move.new_row, move.new_col, move.new_row+2, move.new_col+2),CheckerColor.BLACK, depth ++, node));
-						if(board.twoPositionsMoveAbility(move.new_row+2, move.new_col-2, move.new_row+1, move.new_col-1, CheckerColor.WHITE))
-							node.addChild(min_max(new Board(board), new Move(move.new_row, move.new_col, move.new_row+2, move.new_col-2),CheckerColor.BLACK, depth ++, node));
-					}
-					else{
-						for(int i = 0; i<7; i++){
-							for(int j = 0; j<7; j++){
-								if(board.isOccupied(i, j) && board.getChecker(i, j).color == CheckerColor.WHITE){
-									if(board.onePositionMoveAbility(i-1, j+1)) 
-										node.addChild(min_max(new Board(board), new Move(i,j,i-1,j+1), CheckerColor.WHITE, depth ++, node));
-									if(board.onePositionMoveAbility(i-1, j-1))
-										node.addChild(min_max(new Board(board), new Move(i,j,i-1,j-1), CheckerColor.WHITE, depth ++, node));
-									if(board.twoPositionsMoveAbility(i-2, j+2, i-1, j+1, CheckerColor.BLACK))
-										node.addChild(min_max(new Board(board), new Move(i, j, i-2, j+2),CheckerColor.WHITE, depth ++, node));
-									if(board.twoPositionsMoveAbility(i-2, j-2, i-1, j-1, CheckerColor.BLACK))
-										node.addChild(min_max(new Board(board), new Move(i, j, i-2, j-2),CheckerColor.WHITE, depth ++, node));
-								}
-							}
-						}
-					}
-				}
-			}
-		if(depth == MAX_DEPTH) leaves.add(node);
+		}
+		
+		System.out.println(best_score);
+		System.out.println(best_node.getMove());
+		
+		while(best_node.parent != null && best_node.parent.parent != null) best_node = best_node.parent;
+		return best_node.getMove();
+		
+	}
+	
+	 private static Node min_max(Board board, Move move, FieldState player_color, FieldState current_player_color, int depth, Node parent){
+			 
+		 Node node;
+		 if(depth != 0){
+			 board.moveChecker(move);
+			 // tu ew dodaæ która heurystyka liczenia
+			 int score = board.getAreasScore(current_player_color) + board.getCheckersBeatScore(current_player_color) 
+				+ board.getCheckersNumberScore(current_player_color) + board.getSectorScore(current_player_color) 
+				+ board.getGameStateScore(current_player_color); 
+			 score = current_player_color == player_color? score + parent.getScore() : -score+parent.getScore();
+			 node = new Node(move, score, parent);
+		 }
+		 else {
+			 node = new Node(null, 0, null);
+		 }
+		 GameState game_state = board.getCurrentGameState();
+		
+		 if(game_state != GameState.IN_PLAY || depth == MAX_DEPTH) leaves.add(node);
+		 else {
+			 List <Move> possible_moves = null;
+			 FieldState opponent;
+			 if(current_player_color == FieldState.WHITE)  {
+				 possible_moves = board.getAllWhiteAvailableMoves();
+				 opponent = FieldState.BLACK;
+			 }
+			 else {
+				 possible_moves = board.getAllBlackAvailableMoves();
+				 opponent = FieldState.WHITE;
+			 }			 
+			 opponent = board.isDoubleMove() || depth == 0? current_player_color : opponent;
+			 
+			 for(int i = 0; i<possible_moves.size(); i++){
+				 node.addChild(min_max(new Board(board), possible_moves.get(i), player_color,  opponent, depth+1, node));
+			 }			
+		 }		 
+		//depth nieparzyste ->ruch gracza, parzyste -> ruch przeciwnika(NIE BO PODWOJNY RUCH PATRZYMY NA KOLOR GRACZA)
 		return node;			
-	} */
+	}
+
+	public FieldState getPlayerColor() {
+		return player_color;
+	} 
 	
 }

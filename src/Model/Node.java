@@ -4,15 +4,13 @@ import java.util.ArrayList;
 
 public class Node {
 	
-	private Node parent;
+	public Node parent;
 	private Move move;
-	private int depth;
 	private int value;
 	private ArrayList<Node> children;
 	
-	public Node(Move move, int depth, int value, Node parent){
+	public Node(Move move, int value, Node parent){
 		this.move = move;
-		this.depth = depth;
 		this.parent = parent;
 		this.value = value;
 		children = new ArrayList<Node>();
@@ -28,6 +26,10 @@ public class Node {
 	
 	public Move getMove(){
 		return move;
+	}
+	
+	public String toString(){
+		return ""+value+" , " + children.size();
 	}
 	
 }

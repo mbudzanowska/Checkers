@@ -36,8 +36,8 @@ public class Game {
 	
 	private static void initializePlayers() {
 
-		current_player = new Player(FieldState.WHITE, PlayerType.HUMAN);
-		second_player = new Player(FieldState.BLACK, PlayerType.HUMAN);
+		current_player = new Player(FieldState.WHITE,FieldState.BLACK, PlayerType.HUMAN);
+		second_player = new Player(FieldState.BLACK,FieldState.WHITE, PlayerType.MIN_MAX);
 		
 	}
 	
@@ -62,9 +62,17 @@ public class Game {
 	}
 	
 	private static void makeTheMove(Move move){
-		System.out.println("GOT HERE LOL");
+		System.out.println("AI MADE MOVE");
 		gameLogic.moveChecker(move);
 		boardView.moveChecker(move.old_row+1, move.old_col+1, move.new_row+1, move.new_col+1);
+		synchronized(gameLogic){
+			try {
+				gameLogic.wait(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}		
 		taken_move = move;
 		current_player.if_made_move = true;	
 		processMove();
@@ -101,7 +109,7 @@ public class Game {
 			
 			@Override
 			public boolean validateMove(int old_row, int old_col, int new_row, int new_col, CheckerColor color) {
-				System.out.println("VALIDATE MOVE CALLED");
+				System.out.println("HUMAN: VALIDATE MOVE");
 				Move move = new Move(old_row-1, old_col-1, new_row-1, new_col-1);
 				if(!gameLogic.validateMove(move)) return false;
 				gameLogic.moveChecker(move);
@@ -112,6 +120,7 @@ public class Game {
 
 			@Override
 			public void moveMade() {
+				System.out.println("HUMAN MADE MOVE");
 				processMove();				
 			}
 		});
@@ -130,20 +139,30 @@ public class Game {
 			if(current_player.if_made_move){
 				if(gameLogic.isCheckerBeaten()){
 					System.out.println("CHECKER BEATEN");
-					boardView.removeChecker(gameLogic.beaten_checker_row+1, gameLogic.beaten_checker_col+1);
-					
+					boardView.removeChecker(gameLogic.beaten_checker_row+1, gameLogic.beaten_checker_col+1);	
+					boardView.repaintManually();
+					synchronized(gameLogic){
+						try {
+							gameLogic.wait(500);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+									
 					if(gameLogic.isDoubleMove()) {
 						players_swap = false;
 						System.out.println("CAN MAKE ANOTHER MOVE");
 						if(current_player.type == PlayerType.HUMAN) boardView.forceCheckerMove(taken_move.new_row+1, taken_move.new_col+1);
 					}
+					else boardView.resetForcedMove();
 				}				
 				current_player.if_made_move = false;
 				
-				System.out.println("AREA: " + gameLogic.getAreasScore(current_player.getPlayerColor()));
-				System.out.println("BEAT: " + gameLogic.getCheckersBeatScore(current_player.getPlayerColor()));
-				System.out.println("NUMBER: " + gameLogic.getCheckersNumberScore(current_player.getPlayerColor()));
-				System.out.println("SECTOR: " + gameLogic.getSectorScore(current_player.getPlayerColor()));
+				//System.out.println("AREA: " + gameLogic.getAreasScore(current_player.getPlayerColor()));
+				//System.out.println("BEAT: " + gameLogic.getCheckersBeatScore(current_player.getPlayerColor()));
+				//System.out.println("NUMBER: " + gameLogic.getCheckersNumberScore(current_player.getPlayerColor()));
+				//System.out.println("SECTOR: " + gameLogic.getSectorScore(current_player.getPlayerColor()));
 				
 				if(players_swap){
 					System.out.println("CHANGE PLAYER");
@@ -157,15 +176,17 @@ public class Game {
 			}
 		}	
 		gameState = gameLogic.validateGameState();
-		if(gameState != GameState.IN_PLAY) System.out.println("KONIEC GRYYYYYYYYYY");
-		players_swap = true;
-		
-		current_player.yourTurn(new Board(gameLogic));
+		if(gameState != GameState.IN_PLAY) System.out.println("KONIEC GRY - " + gameState);
+		else{
+			players_swap = true;	
+			current_player.yourTurn(gameLogic);
+		}	
 	}
 	
 	private static void runGame() {
 		gameState = GameState.IN_PLAY;
 		frame.setVisible(true);  
+		if(current_player.type != PlayerType.HUMAN) current_player.yourTurn(gameLogic);
 	}
 
 }

@@ -13,4 +13,8 @@ public class Move {
 		new_row = n_r;
 		new_col = n_c;
 	}
+	
+	public String toString(){
+		return "("+old_row+", "+old_col+") -> ("+new_row+", "+new_col+")";
+	}
 }

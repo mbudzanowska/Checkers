@@ -15,15 +15,17 @@ public class Board {
 	static final int AREA_II = 5;
 	static final int AREA_III = 10;
 	static final int SECTOR_I = 1;
-	static final int SECTOR_II = 10;
-	static final int SECTOR_III = 20;
-	static final int SECTOR_IV = 40;
-	static final int BEAT_POINTS = 30;
+	static final int SECTOR_II = 5;
+	static final int SECTOR_III = 10;
+	static final int SECTOR_IV = 20;
+	static final int BEAT_POINTS = 50;
 	static final int BACKUP_POINTS = 10;
 	static final int COUNT_FACTOR = 5;
 	
 	private FieldState [][] board;
 	private boolean if_double_move = false; // if currently move checker has to beat another one
+	private int double_checker_row;
+	private int double_checker_col;
 	
 	private boolean if_checker_beaten = false; //if checker was beaten in current move
 	public int beaten_checker_row;
@@ -34,6 +36,8 @@ public class Board {
 	
 	private List<Move> availableBlackMoves;
 	private List<Move> availableWhiteMoves;
+	
+	private GameState current_game_state;
 	
 	public Board(){
 		
@@ -62,6 +66,10 @@ public class Board {
 		}	
 		this.white_number = board.white_number;
 		this.black_number = board.black_number;
+		this.if_double_move = board.if_double_move;
+		this.double_checker_col = board.double_checker_col;
+		this.double_checker_row = board.double_checker_row;
+		
 	}
 	
 	private FieldState getChecker(int row, int col){
@@ -97,8 +105,12 @@ public class Board {
 	private void resetState(){
 		if_checker_beaten = false;
 		if_double_move = false;
+		double_checker_col = -1;
+		double_checker_col = -1;
 		beaten_checker_col = -1;
 		beaten_checker_row = -1;	
+		current_game_state = null;
+		resetAvailableMoves();
 	}
 	
 	public boolean isDoubleMove(){
@@ -113,6 +125,11 @@ public class Board {
 		return getChecker(row, col) == FieldState.EMPTY;
 	}
 	
+	public GameState getCurrentGameState(){
+		if(current_game_state == null) current_game_state = validateGameState();
+		return current_game_state;
+	}
+	
 	private boolean canMakeAnotherMove(int row, int col){
 		
 		boolean if_can = false;
@@ -122,11 +139,15 @@ public class Board {
 		else if_can = canCheckerBeat(row, col, row+2, col-2, FieldState.WHITE) 
 				|| canCheckerBeat(row, col, row+2, col+2, FieldState.WHITE);
 
-		if(if_can) if_double_move = true;
+		if(if_can) {
+			if_double_move = true;
+			double_checker_row = row;
+			double_checker_col = col;
+		}
 		return if_can;
 	}
 	
-	private boolean canCheckerBeat(int old_row, int old_col, int new_row, int new_col, FieldState opponent_checker){
+	public boolean canCheckerBeat(int old_row, int old_col, int new_row, int new_col, FieldState opponent_checker){
 		return (new_row  <= 7) && (new_row >= 0) && (new_col <= 7) && (new_col >= 0)
 				&& getChecker((new_row + old_row) / 2, (new_col + old_col) / 2) == opponent_checker
 				&& isFieldFree(new_row, new_col);		
@@ -208,22 +229,39 @@ public class Board {
 	
 	public List<Move> getAllBlackAvailableMoves(){
 		List<Move> list = new ArrayList<Move>();
-		for(int i = 0; i<8; i++){
-			for(int j = 0; j<8; j++){
-				if(getChecker(i, j) == FieldState.BLACK) list.addAll(getAvailableMovesForBlackOne(i, j));
-			}
+		if(isDoubleMove() && getChecker(double_checker_row, double_checker_col) == FieldState.BLACK){
+			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row+2, double_checker_col+2, FieldState.WHITE))
+				list.add(new Move(double_checker_row, double_checker_col, double_checker_row+2, double_checker_col+2));
+			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row+2, double_checker_col-2, FieldState.WHITE))
+				list.add(new Move(double_checker_row, double_checker_col, double_checker_row+2, double_checker_col-2));
 		}
+		else {
+			for(int i = 0; i<8; i++){
+				for(int j = 0; j<8; j++){
+					if(getChecker(i, j) == FieldState.BLACK) list.addAll(getAvailableMovesForBlackOne(i, j));
+				}
+			}
+		}		
 		availableBlackMoves = list;
 		return list;
 	}
 	
 	public List<Move> getAllWhiteAvailableMoves(){
 		List<Move> list = new ArrayList<Move>();
-		for(int i = 0; i<8; i++){
-			for(int j = 0; j<8; j++){
-				if(getChecker(i, j) == FieldState.WHITE) list.addAll(getAvailableMovesForWhiteOne(i, j));
+		if(isDoubleMove() && getChecker(double_checker_row, double_checker_col) == FieldState.WHITE){
+			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col+2, FieldState.BLACK))
+				list.add(new Move(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col+2));
+			if(canCheckerBeat(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col-2, FieldState.BLACK))
+				list.add(new Move(double_checker_row, double_checker_col, double_checker_row-2, double_checker_col-2));
+		}
+		else {
+			for(int i = 0; i<8; i++){
+				for(int j = 0; j<8; j++){
+					if(getChecker(i, j) == FieldState.WHITE) list.addAll(getAvailableMovesForWhiteOne(i, j));
+				}
 			}
 		}
+		
 		availableWhiteMoves = list;
 		return list;
 	}
@@ -247,8 +285,16 @@ public class Board {
 	}
 	
 	public int getCheckersNumberScore(FieldState color){
-		if(color == FieldState.WHITE) return isCheckerBeaten()? (100+white_number * COUNT_FACTOR) : white_number * COUNT_FACTOR; 
+		if(color == FieldState.WHITE) return isCheckerBeaten()? (300+white_number * COUNT_FACTOR) : white_number * COUNT_FACTOR; 
 		else return isCheckerBeaten()? (100+black_number * COUNT_FACTOR) : black_number * COUNT_FACTOR; 
+	}
+	
+	public int getGameStateScore(FieldState color){
+		GameState state = validateGameState();
+		if(color == FieldState.BLACK && state == GameState.BLACK_PLAYER_WON 
+				|| color == FieldState.WHITE && state == GameState.WHITE_PLAYER_WON) return 10000;
+		else if(state == GameState.TIE) return 5000;
+		else return 0;
 	}
 	
 	public int getCheckersBeatScore(FieldState color){
