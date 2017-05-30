@@ -9,15 +9,16 @@ public class Player {
 
 	private FieldState player_color;
 	private Heuristic board_heuristic;
-	private Heuristic second;
-	private PlayerType type;
+	public Heuristic second;
+	public PlayerType type;
 	public boolean if_made_move = false;
 	private PlayerListener playerListener;
-	private final static int MAX_DEPTH = 6;
+	private final static int MAX_DEPTH = 5;
 	private Move chosen_move;
-	private int val;
-	static int min_max;
-	static int alpha_beta;
+	public int move = 0;
+	public long time;
+	
+	public long counter = 0;
 	
 	public Player(FieldState player_color, PlayerType type, Heuristic board_heuristic, Heuristic second){
 		this.player_color = player_color;
@@ -55,22 +56,27 @@ public class Player {
 			break;
 		}
 		case MIN_MAX :{
-			min_max = 0;
 			//System.out.println("MIN MAX PROCESSING");
+			move ++;
+			//long startTime=System.nanoTime();
 			min_max(copy, null, player_color, MAX_DEPTH, 0);
+			//long elapsed=System.nanoTime() - startTime;
+			//System.out.println("Czas wykonania:"+elapsed/1000000000.0+"  "+move +" MAX");
 			//System.out.println(chosen_move +"       " + val + "    " + player_color);
-			System.out.println("MIN MAX NODE VISITED: "+min_max);
+			//time +=elapsed;
 			playerListener.makeMove(chosen_move);
 			
 			break;
 			
 		}
 		case ALFA_BETA :{
-			alpha_beta = 0;
-			//System.out.println("ALPHA BETA PROCESSING");
+			move ++;
+			long startTime=System.nanoTime();
+			System.out.println("ALPHA BETA PROCESSING");
 			alpha_beta(copy, null, player_color, MAX_DEPTH, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-			//System.out.println(chosen_move +"       " + val + "    " + player_color);
-			System.out.println("ALPHA BETA NODE VISITED: "+alpha_beta +"   "+ second);
+			long elapsed=System.nanoTime() - startTime;
+			time +=elapsed;
+			System.out.println("Czas wykonania:"+elapsed/1000000000.0+"  "+move +" ALFA");
 			playerListener.makeMove(chosen_move);
 			break;
 		}
@@ -80,7 +86,7 @@ public class Player {
 	
 	 private double min_max(Board board, Move move, FieldState current_player_color, int depth, int score_sum){
 		 
-		 min_max ++;
+		 counter ++;
 		 
 		 int score = depth == MAX_DEPTH? score_sum : score_sum + getNodeScore(board, move, current_player_color); 
 		 if(board.getCurrentGameState() != GameState.IN_PLAY || depth == 0) {
@@ -95,14 +101,10 @@ public class Player {
 			 bestValue = Double.NEGATIVE_INFINITY;
 			 for(Move child: possible_moves){
 				 double value = min_max(new Board(board), child, opponent, depth-1, score);
-				 if(value > bestValue){
-					
+				 if(value > bestValue){			
 					 bestValue = value;
-					 if(depth == MAX_DEPTH) {
-						 chosen_move = child;
-						 val = (int) bestValue;
-						// System.out.println("MAX  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
-					 }
+					 if(depth == MAX_DEPTH)  chosen_move = child;
+						// System.out.println("MAX  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);					 
 				 }
 			 }	
 			 return bestValue;
@@ -113,11 +115,8 @@ public class Player {
 				 double value = min_max(new Board(board), child, opponent, depth-1, score);
 				 if(value < bestValue){
 					 bestValue = value;				 
-					 if(depth == MAX_DEPTH) {
-						 chosen_move = child;
-						 val = (int) bestValue;		
-						 //System.out.println("MIN  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
-					 }
+					 if(depth == MAX_DEPTH)  chosen_move = child;	
+						 //System.out.println("MIN  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth); 
 				 }
 			 }
 			 return bestValue;
@@ -126,7 +125,7 @@ public class Player {
 	 
  private double alpha_beta(Board board, Move move, FieldState current_player_color, int depth, int score_sum, double alpha, double beta){
 	 
-	 	alpha_beta ++;
+	 	counter ++;
 		 
 		 int score = depth == MAX_DEPTH? score_sum : score_sum + getNodeScore(board, move, current_player_color); 
 		 if(board.getCurrentGameState() != GameState.IN_PLAY || depth == 0) {
@@ -143,14 +142,10 @@ public class Player {
 			 bestValue = Double.NEGATIVE_INFINITY;
 			 for(Move child: possible_moves){
 				 double value = alpha_beta(new Board(board), child, opponent, depth-1, score, alpha, beta);
-				 if(value > bestValue){
-					
+				 if(value > bestValue){			
 					 bestValue = value;
-					 if(depth == MAX_DEPTH) {
-						 chosen_move = child;
-						 val = (int) bestValue;
-						// System.out.println("MAX  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
-					 }
+					 if(depth == MAX_DEPTH)  chosen_move = child;
+						// System.out.println("alfa  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);					 
 				 }
 				 alpha = Double.max(alpha, bestValue);
 				 if(beta <= alpha) break;
@@ -163,12 +158,9 @@ public class Player {
 				 double value = alpha_beta(new Board(board), child, opponent, depth-1, score, alpha, beta);
 				 if(value < bestValue){
 					 bestValue = value;				 
-					 if(depth == MAX_DEPTH) {
-						 chosen_move = child;
-						 val = (int) bestValue;		
-						 //System.out.println("MIN  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth);
-					 }
-				 }	 
+					 if(depth == MAX_DEPTH)  chosen_move = child;	
+						 //System.out.println("alfa  "+current_player_color+ " best: " + child + " val: "+val +" depth:" + depth); 
+				 }
 				 beta = Double.min(beta, bestValue);
 				 if(beta <= alpha) break;
 			 }
@@ -176,7 +168,9 @@ public class Player {
 		 }
 	 }
 	
-	private int getScore(Board board, FieldState color){		
+	private int getScore(Board board, FieldState c){		
+		
+		FieldState color = c == FieldState.WHITE? FieldState.BLACK : FieldState.WHITE;		
 		int score = 0;	
 		switch(board_heuristic){
 		case AREA: {
@@ -194,7 +188,19 @@ public class Player {
 		case CHECKERS_NUMBER: {
 			score = board.getCheckersNumberScore(color);
 			break;
-		}	
+		}
+		case BEAT_AB_AREA:{
+			score = board.getCheckersBeatScore(color) + board.getAreasScore(color);
+			break;
+		}			
+		case CH_NUMBER_AREA: {
+			score = board.getCheckersNumberScore(color) + board.getAreasScore(color);
+			break;
+		}		
+		case CH_NUMBER_BEAT_AB: {
+			score = board.getCheckersNumberScore(color) +  board.getCheckersBeatScore(color);
+			break;
+		}
 		}
 		return score + board.getGameStateScore(color); 		
 	}

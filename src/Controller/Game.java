@@ -37,8 +37,11 @@ public class Game {
 	
 	private static void initializePlayers() {
 
+		//current_player = new Player(FieldState.WHITE, PlayerType.ALFA_BETA, Heuristic.BEAT_ABILITY, null);
+		//second_player = new Player(FieldState.BLACK, PlayerType.MIN_MAX, Heuristic.BEAT_ABILITY, null);
+		
 		current_player = new Player(FieldState.WHITE, PlayerType.HUMAN, Heuristic.BEAT_ABILITY, null);
-		second_player = new Player(FieldState.BLACK, PlayerType.ALFA_BETA, Heuristic.BEAT_ABILITY, Heuristic.STATIC_ORDERING);
+		second_player = new Player(FieldState.BLACK, PlayerType.ALFA_BETA, Heuristic.BEAT_AB_AREA, null);
 		
 	}
 	
@@ -63,7 +66,7 @@ public class Game {
 	}
 	
 	private static void makeTheMove(Move move){
-		System.out.println("AI MADE MOVE");
+		//System.out.println("AI MADE MOVE");
 		gameLogic.moveChecker(move);
 		
 		
@@ -141,7 +144,7 @@ public class Game {
 		if(gameState == GameState.IN_PLAY){
 			if(current_player.if_made_move){
 				if(gameLogic.isCheckerBeaten()){
-					System.out.println("CHECKER BEATEN");
+					//System.out.println("CHECKER BEATEN");
 					boardView.removeChecker(gameLogic.beaten_checker_row+1, gameLogic.beaten_checker_col+1);	
 					boardView.repaintManually();
 					synchronized(gameLogic){
@@ -155,7 +158,7 @@ public class Game {
 									
 					if(gameLogic.isDoubleMove()) {
 						players_swap = false;
-						System.out.println("CAN MAKE ANOTHER MOVE");
+						//System.out.println("CAN MAKE ANOTHER MOVE");
 						if(current_player.getPlayerType() == PlayerType.HUMAN) boardView.forceCheckerMove(taken_move.new_row+1, taken_move.new_col+1);
 					}
 					else boardView.resetForcedMove();
@@ -168,7 +171,7 @@ public class Game {
 				//System.out.println("SECTOR: " + gameLogic.getSectorScore(current_player.getPlayerColor()));
 				
 				if(players_swap){
-					System.out.println("CHANGE PLAYER");
+					//System.out.println("CHANGE PLAYER");
 					Player c_p = current_player;
 					current_player = second_player;
 					second_player = c_p;	
@@ -179,7 +182,13 @@ public class Game {
 			}
 		}	
 		gameState = gameLogic.validateGameState();
-		if(gameState != GameState.IN_PLAY) System.out.println("KONIEC GRY - " + gameState);
+		if(gameState != GameState.IN_PLAY) {
+			System.out.println("KONIEC GRY - " + gameState);
+			System.out.println(current_player.getPlayerColor() +"  " + current_player.second  +"  " + current_player.time/(current_player.move * 1000000000.0));
+			System.out.println(second_player.getPlayerColor() +"  " +  second_player.second  +"  " + second_player.time/(second_player.move * 1000000000.0));
+			System.out.println(current_player.getPlayerColor() +"  " + current_player.type  +"  " + current_player.counter+"  " + current_player.counter*1.0/current_player.move);
+			System.out.println(second_player.getPlayerColor() +"  " +  second_player.type  +"  " + second_player.counter +"  " +  second_player.counter*1.0/second_player.move);
+		}
 		else{
 			players_swap = true;	
 			current_player.yourTurn(gameLogic);

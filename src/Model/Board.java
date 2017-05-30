@@ -12,8 +12,8 @@ public class Board {
 	}
 	
 	static final int AREA_I = 1;
-	static final int AREA_II = 5;
-	static final int AREA_III = 10;
+	static final int AREA_II = 10;
+	static final int AREA_III = 20;
 	static final int SECTOR_I = 1;
 	static final int SECTOR_II = 5;
 	static final int SECTOR_III = 10;
