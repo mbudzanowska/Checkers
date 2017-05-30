@@ -1,4 +1,6 @@
 package Model;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import Model.Board.FieldState;
 
@@ -6,7 +8,8 @@ import Model.Board.FieldState;
 public class Player {
 
 	private FieldState player_color;
-	private Heuristic heuristic;
+	private Heuristic board_heuristic;
+	private Heuristic second;
 	private PlayerType type;
 	public boolean if_made_move = false;
 	private PlayerListener playerListener;
@@ -16,10 +19,11 @@ public class Player {
 	static int min_max;
 	static int alpha_beta;
 	
-	public Player(FieldState player_color, PlayerType type, Heuristic heuristic){
+	public Player(FieldState player_color, PlayerType type, Heuristic board_heuristic, Heuristic second){
 		this.player_color = player_color;
 		this.type = type;	
-		this.heuristic = heuristic;
+		this.board_heuristic = board_heuristic;
+		this.second = second;
 	}
 	
 	public void setPlayerListener(PlayerListener playerListener){
@@ -66,7 +70,7 @@ public class Player {
 			//System.out.println("ALPHA BETA PROCESSING");
 			alpha_beta(copy, null, player_color, MAX_DEPTH, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 			//System.out.println(chosen_move +"       " + val + "    " + player_color);
-			System.out.println("ALPHA BETA NODE VISITED: "+alpha_beta);
+			System.out.println("ALPHA BETA NODE VISITED: "+alpha_beta +"   "+ second);
 			playerListener.makeMove(chosen_move);
 			break;
 		}
@@ -131,6 +135,8 @@ public class Player {
 		 
 		 double bestValue;
 		 List <Move> possible_moves = getMoves(current_player_color, board);
+		 if(second != null) Collections.sort(possible_moves, new MoveComparator());
+		 
 		 FieldState opponent = board.isDoubleMove()? current_player_color : getOpponent(current_player_color);
 		 
 		 if(current_player_color == getPlayerColor()) { // MAX
@@ -172,7 +178,7 @@ public class Player {
 	
 	private int getScore(Board board, FieldState color){		
 		int score = 0;	
-		switch(heuristic){
+		switch(board_heuristic){
 		case AREA: {
 			score = board.getAreasScore(color);
 			break;
